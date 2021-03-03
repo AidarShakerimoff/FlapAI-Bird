@@ -9,19 +9,18 @@ sys.path.append('./game')
 sys.path.append('./agents')
 sys.path.append('./utils')
 import argparse
+import time
 
 from BaselineAgent import BaselineAgent
 from QLearningAgent import QLearningAgent
 from SARSAAgent import SARSAAgent
-from FuncApproxLRAgent import FuncApproxLRAgent
-from FuncApproxCNNAgent import FuncApproxCNNAgent
-from FuncApproxDNNAgent import FuncApproxDNNAgent
+from generate_graph import generate_graph
 
 import warnings
 warnings.filterwarnings('ignore')
 
 
-agent_options = ['Baseline' ,'QLearning', 'SARSA', 'FuncApproxLR', 'FuncApproxDNN', 'FuncApproxCNN']
+agent_options = ['Baseline' ,'QLearning', 'SARSA']
 order_options = ['forward', 'backward']
 
 
@@ -32,7 +31,7 @@ def parseArgs():
 
     parser.add_argument('--algo', type = str, default = 'QLearning',
                         help = 'Learning algorithm.', choices = agent_options)
-    
+
     # Parameters for Q-learning
     parser.add_argument('--rounding', type = int, default = None,
                         help = 'Level of discretization.')
@@ -56,72 +55,49 @@ def parseArgs():
                         help = 'Use epsilon decay or not.')
     parser.add_argument('--lrDecay', action = 'store_true',
                         help = 'Use learning rate decay or not.')
-    
-    # Additional Parameters for Neural Networks.
-    parser.add_argument('--resume', action = 'store_true',
-                        help = 'Resume from checkpoints or not.')
-    parser.add_argument('--seed', type = int, default = 0,
-                        help = 'Random seed for PyTorch.')
-    parser.add_argument('--batch-size', type = int, default = 32,
-                        help = 'Size of a training minibatch.')
-    parser.add_argument('--num-experience', type = int, default = 50000,
-                        help = 'Number of past experiences stored in the memory.')
-    
+    parser.add_argument('--graph', action = 'store_true',
+                        help = 'To generate graph for scores or not')
+
     args = parser.parse_known_args()[0]
     return args
 
-    
+
 def main():
     ''' Main program. '''
     print("Welcome to Flappy Bird.")
     args = parseArgs()
-    
+
+    start = time.time()
+
     if args.algo == 'Baseline':
         agent = BaselineAgent(actions = [0, 1], probFlap = args.probFlap)
         agent.train(numIters = args.numTrainIters, evalPerIters = args.evalPerIters,
                     numItersEval = args.numTestIters)
-        
+
     elif args.algo == 'QLearning':
         agent = QLearningAgent(actions = [0, 1], rounding = args.rounding, probFlap = args.probFlap)
         agent.train(order = args.order, numIters = args.numTrainIters, epsilon = args.epsilon,
                     discount = args.discount, eta = args.lr, epsilonDecay = args.epsilonDecay,
                     etaDecay = args.lrDecay, evalPerIters = args.evalPerIters,
                     numItersEval = args.numTestIters)
-        agent.saveQValues()
-        
+        if args.graph:
+            generate_graph(algo=args.algo, rounding=args.rounding, numTrainIters=args.numTrainIters,
+                            interval=args.evalPerIters)
+
     elif args.algo == 'SARSA':
         agent = SARSAAgent(actions = [0, 1], rounding = args.rounding, probFlap = args.probFlap)
         agent.train(order = args.order, numIters = args.numTrainIters, epsilon = args.epsilon,
                     discount = args.discount, eta = args.lr, epsilonDecay = args.epsilonDecay,
                     etaDecay = args.lrDecay, evalPerIters = args.evalPerIters,
                     numItersEval = args.numTestIters)
-        agent.saveQValues()
-        
-    elif args.algo == 'FuncApproxLR':
-        agent = FuncApproxLRAgent(actions = [0, 1], probFlap = args.probFlap)
-        agent.train(order = args.order, numIters = args.numTrainIters, epsilon = args.epsilon,
-                    discount = args.discount, eta = args.lr, epsilonDecay = args.epsilonDecay,
-                    etaDecay = args.lrDecay, evalPerIters = args.evalPerIters,
-                    numItersEval = args.numTestIters)
-        agent.saveWeights()
-        
-    elif args.algo == 'FuncApproxDNN':
-        agent = FuncApproxDNNAgent(actions = [0, 1], probFlap = args.probFlap)
-        agent.train(order = args.order, numIters = args.numTrainIters, epsilon = args.epsilon,
-                    discount = args.discount, lr = args.lr, epsilonDecay = args.epsilonDecay,
-                    lrDecay = args.lrDecay, evalPerIters = args.evalPerIters,
-                    numItersEval = args.numTestIters, seed = args.seed, resume = args.resume)
-        agent.saveModel()
-        
-    elif args.algo == 'FuncApproxCNN':
-        agent = FuncApproxCNNAgent(actions = [0, 1], probFlap = args.probFlap)
-        agent.train(numIters = args.numTrainIters, epsilon = args.epsilon, discount = args.discount,
-                    batch_size = args.batch_size, lr = args.lr, num_experience = args.num_experience,
-                    epsilonDecay = args.epsilonDecay, lrDecay = args.lrDecay,
-                    evalPerIters = args.evalPerIters, numItersEval = args.numTestIters,
-                    seed = args.seed, resume = args.resume)
-        agent.saveModel()
-        
-        
+        if args.graph:
+            generate_graph(algo=args.algo, rounding=args.rounding, numTrainIters=args.numTrainIters,
+                            interval=args.evalPerIters)
+
+    end = time.time()
+    print(f"Total of {end - start} seconds")
+    print(f"{(end - start)//3600} hours, {((end - start)%3600)//60} minutes, {((end - start)%3600)%60} seconds")
+
+
 if __name__ == '__main__':
     main()
