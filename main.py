@@ -13,14 +13,14 @@ import time
 
 from BaselineAgent import BaselineAgent
 from QLearningAgent import QLearningAgent
-from SARSAAgent import SARSAAgent
-from generate_graph import generate_graph
+from SARSAAgent import SARSAAgent     #we got rid of function approximators for our project
+from generate_graph import generate_graph   #special file that helps generating graphs
 
 import warnings
 warnings.filterwarnings('ignore')
 
 
-agent_options = ['Baseline' ,'QLearning', 'SARSA']
+agent_options = ['Baseline' ,'QLearning', 'SARSA']  #we got rid of function approximators for our project
 order_options = ['forward', 'backward']
 
 
@@ -90,11 +90,11 @@ def main():
                     discount = args.discount, eta = args.lr, epsilonDecay = args.epsilonDecay,
                     etaDecay = args.lrDecay, evalPerIters = args.evalPerIters,
                     numItersEval = args.numTestIters)
-        if args.graph:
+        if args.graph:  # generates a graph from stored scores
             generate_graph(algo=args.algo, rounding=args.rounding, numTrainIters=args.numTrainIters,
                             interval=args.evalPerIters)
 
-    end = time.time()
+    end = time.time()   #counts elapsed time
     print(f"Total of {end - start} seconds")
     print(f"{(end - start)//3600} hours, {((end - start)%3600)//60} minutes, {((end - start)%3600)%60} seconds")
 
